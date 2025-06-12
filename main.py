@@ -4,6 +4,7 @@ from map import generate_static_map, ROWS, COLS
 import heapq
 import math
 from collections import deque
+import time
 
 # Configuration
 CELL_SIZE = 25
@@ -107,7 +108,9 @@ class Explorer:
 
 
 def main():
+
     pygame.init()
+    font = pygame.font.SysFont("Arial", 24)
     screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
     info = pygame.display.Info()
     screen_width, screen_height = info.current_w, info.current_h
@@ -204,7 +207,8 @@ def main():
 
 
 
-
+    start_time = time.time()
+    end_time = None
     running = True
     while running:
         clock.tick(30)
@@ -235,20 +239,34 @@ def main():
                         )
 
             # If changed, reset path to recalculate it
-            
+
+        frontiers = explorer.get_frontiers()
+
         if map_changed or not explorer.path:
-            frontiers = explorer.get_frontiers()
+            
             if frontiers:
                 target = frontiers[0]
                 explorer.path = a_star(explorer.pos, target, explorer.known_map)
+        
+        if not frontiers and not explorer.path:
+            if end_time is None:
+                end_time = time.time()
+                print(f"Exploration complete in {end_time - start_time:.2f} seconds")
 
         draw_grid(screen, explorer.known_map, wall_img, floor_img)
         frontiers = explorer.get_frontiers()
-        print(frontiers)
+        # print(frontiers)
         for fy, fx in frontiers:
             fx_px = offset_x + fx * CELL_SIZE
             fy_px = offset_y + fy * CELL_SIZE
             pygame.draw.circle(screen, (0, 255, 255), (fx_px + CELL_SIZE // 2, fy_px + CELL_SIZE // 2), CELL_SIZE // 4)
+
+        if end_time:
+            elapsed = end_time - start_time
+        else:
+            elapsed = time.time() - start_time
+        timer_text = font.render(f"Time: {elapsed:.2f}s", True, (255, 255, 255))
+        screen.blit(timer_text, (20, 20))    
         pygame.display.flip()
 
     pygame.quit()
