@@ -1,6 +1,6 @@
 
 Mettre a la place du point
-finir l'algo des frontieres, avec un calcul des centroids
+✔️finir l'algo des frontieres, avec un calcul des centroids
 ✔️ finir la maps pour remplir completement l'espace 
 ✔️ mettre une porte de boss devant la salle de fin pour l'exploration pas explorer la salle de boss mais montrer que c'est la
 
@@ -14,8 +14,8 @@ Essayer d'avoir un visuel.
 
 Temps additionel ::
 Effet torche sur le champs de vision ? 
-Regler les TP a travers le mur??
+✔️Regler les TP a travers le mur??
 
 
 parse a travers la liste d'etapes a chaque deplacement 
-recalcul si l'un d'entre eux est un mur
+✔️ recalcul si l'un d'entre eux est un mur
