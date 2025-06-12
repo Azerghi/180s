@@ -2,7 +2,6 @@
 import pygame
 from map import generate_static_map, ROWS, COLS
 import heapq
-import math
 from collections import deque
 import time
 
@@ -234,11 +233,8 @@ def main():
                 # Plan a path
                 explorer.path = explorer.a_star(explorer.pos, target)
 
-                # Optional: draw the target (e.g. yellow circle)
-                tx, ty = target[1], target[0]
-                tx_px = offset_x + tx * CELL_SIZE
-                ty_px = offset_y + ty * CELL_SIZE
-                pygame.draw.circle(screen, (255, 255, 0), (tx_px + CELL_SIZE // 2, ty_px + CELL_SIZE // 2), CELL_SIZE // 4)
+
+
         else:
             # Step forward on the path
             explorer.pos = explorer.path.pop(0)
@@ -280,6 +276,14 @@ def main():
             fx_px = offset_x + fx * CELL_SIZE
             fy_px = offset_y + fy * CELL_SIZE
             pygame.draw.circle(screen, (0, 255, 255), (fx_px + CELL_SIZE // 2, fy_px + CELL_SIZE // 2), CELL_SIZE // 4)
+
+        if target:
+            # Draw the target
+            tx, ty = target[1], target[0]
+            tx_px = offset_x + tx * CELL_SIZE
+            ty_px = offset_y + ty * CELL_SIZE
+            print(tx_px, ty_px)
+            pygame.draw.circle(screen, (255, 255, 0), (tx_px + CELL_SIZE // 2, ty_px + CELL_SIZE // 2), CELL_SIZE // 4)
 
         if end_time:
             elapsed = end_time - start_time
