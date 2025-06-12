@@ -104,7 +104,49 @@ class Explorer:
                         frontiers.append((cy, cx))
 
         return frontiers
+    
+    def choose_target(self):
+        frontiers = self.get_frontiers()
+        if not frontiers:
+            return None
 
+        def manhattan(pos1, pos2):
+            return abs(pos1[0] - pos2[0]) + abs(pos1[1] - pos2[1])
+
+        # On choisit la frontière la plus proche
+        closest = min(frontiers, key=lambda f: manhattan(self.pos, f))
+        return closest
+    
+    def a_star(self, start, goal):
+        open_set = []
+        heapq.heappush(open_set, (0, start))
+        came_from = {}
+        g_score = {start: 0}
+
+        while open_set:
+            _, current = heapq.heappop(open_set)
+
+            if current == goal:
+                # On reconstruit le chemin
+                path = []
+                while current != start:
+                    path.append(current)
+                    current = came_from[current]
+                path.reverse()
+                return path
+
+            for dy, dx in [(-1,0),(1,0),(0,-1),(0,1)]:
+                ny, nx = current[0] + dy, current[1] + dx
+                neighbor = (ny, nx)
+                if 0 <= ny < len(self.known_map) and 0 <= nx < len(self.known_map[0]):
+                    if self.known_map[ny][nx] != 1:  # Peut marcher ici
+                        tentative_g = g_score[current] + 1
+                        if neighbor not in g_score or tentative_g < g_score[neighbor]:
+                            came_from[neighbor] = current
+                            g_score[neighbor] = tentative_g
+                            f = tentative_g + abs(goal[0]-ny) + abs(goal[1]-nx)
+                            heapq.heappush(open_set, (f, neighbor))
+        return []
 
 def main():
     pygame.init()
@@ -209,21 +251,29 @@ def main():
                 running = False
 
         screen.fill((0, 0, 0))
-        if not explorer.path:
+        """if not explorer.path:
             frontiers = explorer.get_frontiers()
             if frontiers:
                 target = frontiers[0]  # on pourrait choisir plus intelligent plus tard
-                explorer.path = a_star(explorer.pos, target, explorer.known_map)
+                explorer.path = a_star(explorer.pos, target, explorer.known_map)"""
 
-        if explorer.path:
-            next_pos = explorer.path.pop(0)
-            explorer.pos = next_pos
+        if not explorer.path:
+            target = explorer.choose_target()
+            if target:
+                fy = target[1]
+                fx = target[0]
+                fx_px = offset_x + fx * CELL_SIZE
+                fy_px = offset_y + fy * CELL_SIZE
+                pygame.draw.circle(screen, (255, 255, 0), (target[0] + CELL_SIZE // 2, target[1] + CELL_SIZE // 2), CELL_SIZE // 4)
+                explorer.path = explorer.a_star(explorer.pos, target)
+        else:
+            # Avancer d’une case
+            explorer.pos = explorer.path.pop(0)
             explorer.update_visibility()
 
 
         draw_grid(screen, explorer.known_map, wall_img, floor_img)
         frontiers = explorer.get_frontiers()
-        print(frontiers)
         for fy, fx in frontiers:
             fx_px = offset_x + fx * CELL_SIZE
             fy_px = offset_y + fy * CELL_SIZE
