@@ -137,6 +137,9 @@ def main():
     explorer_img = pygame.image.load("knight.png").convert_alpha()
     explorer_img = pygame.transform.scale(explorer_img, (CELL_SIZE, CELL_SIZE))
 
+    door_img = pygame.image.load("Door.png").convert_alpha()
+    door_img = pygame.transform.scale(door_img, (CELL_SIZE, CELL_SIZE))
+
     grid = generate_static_map()
     explorer = Explorer((26,0), grid)
     explorer.update_visibility()
@@ -192,7 +195,8 @@ def main():
                     screen.blit(wall_img, rect)
                 else:
                     screen.blit(floor_img, rect)
-
+                if val == 2 :
+                    screen.blit(door_img, rect)
         ey, ex = explorer.pos
         ex_px = offset_x + ex * CELL_SIZE
         ey_px = offset_y + ey * CELL_SIZE
