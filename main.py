@@ -3,7 +3,7 @@ import pygame
 from map import generate_static_map, ROWS, COLS
 import heapq
 import math
-
+from collections import deque
 
 # Configuration
 CELL_SIZE = 25
@@ -62,27 +62,49 @@ class Explorer:
 
 
     def get_frontiers(self):
+        visited = [[False for _ in range(len(self.known_map[0]))] for _ in range(len(self.known_map))]
         frontiers = []
+
+        def is_frontier(y, x):
+            if self.known_map[y][x] != 0:
+                return False
+            for dy, dx in [(-1,0),(1,0),(0,-1),(0,1)]:
+                ny, nx = y + dy, x + dx
+                if 0 <= ny < len(self.known_map) and 0 <= nx < len(self.known_map[0]):
+                    if self.known_map[ny][nx] == -1:
+                        return True
+            return False
+
         for y in range(1, len(self.known_map) - 1):
             for x in range(1, len(self.known_map[0]) - 1):
-                if self.known_map[y][x] == 0:
-                    for dx, dy in [(-1,0),(1,0),(0,-1),(0,1)]:
-                        nx, ny = x + dx, y + dy
-                        if self.known_map[ny][nx] == -1:
-                            frontiers.append((y, x))
-                            break
+                if is_frontier(y, x) and not visited[y][x]:
+                    # On lance un BFS pour regrouper cette zone frontière
+                    queue = deque()
+                    group = []
+                    queue.append((y, x))
+                    visited[y][x] = True
+
+                    while queue:
+                        cy, cx = queue.popleft()
+                        group.append((cy, cx))
+                        for dy, dx in [(-1,0),(1,0),(0,-1),(0,1)]:
+                            ny, nx = cy + dy, cx + dx
+                            if (0 <= ny < len(self.known_map) and
+                                0 <= nx < len(self.known_map[0]) and
+                                not visited[ny][nx] and is_frontier(ny, nx)):
+                                visited[ny][nx] = True
+                                queue.append((ny, nx))
+
+                    # Calcul du centroïde
+                    if group:
+                        sum_y = sum(pos[0] for pos in group)
+                        sum_x = sum(pos[1] for pos in group)
+                        cy = int(round(sum_y / len(group)))
+                        cx = int(round(sum_x / len(group)))
+                        frontiers.append((cy, cx))
+
         return frontiers
 
-
-def draw_grid(screen, grid, wall_img, floor_img):
-    for row in range(ROWS):
-        for col in range(COLS):
-            rect = pygame.Rect(col * CELL_SIZE, row * CELL_SIZE, CELL_SIZE, CELL_SIZE)
-            if grid[row][col] == 1:
-                screen.blit(wall_img, rect)
-            else:
-                screen.blit(floor_img, rect)
-            #pygame.draw.rect(screen, GRID_COLOR, rect, 1)  # facultatif : grille par-dessus
 
 def main():
     pygame.init()
@@ -175,6 +197,7 @@ def main():
         pygame.draw.circle(screen, (255, 0, 0), (ex_px + CELL_SIZE//2, ey_px + CELL_SIZE//2), CELL_SIZE//3)
 
 
+
     running = True
     while running:
         clock.tick(30)
@@ -196,11 +219,15 @@ def main():
 
 
         draw_grid(screen, explorer.known_map, wall_img, floor_img)
+        frontiers = explorer.get_frontiers()
+        print(frontiers)
+        for fy, fx in frontiers:
+            fx_px = offset_x + fx * CELL_SIZE
+            fy_px = offset_y + fy * CELL_SIZE
+            pygame.draw.circle(screen, (0, 255, 255), (fx_px + CELL_SIZE // 2, fy_px + CELL_SIZE // 2), CELL_SIZE // 4)
         pygame.display.flip()
 
     pygame.quit()
-
-
 
 if __name__ == "__main__":
     main()
