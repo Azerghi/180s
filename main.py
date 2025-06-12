@@ -112,6 +112,8 @@ def main():
     floor_img = pygame.image.load("floor.png").convert()
     floor_img = pygame.transform.scale(floor_img, (CELL_SIZE, CELL_SIZE))
 
+    explorer_img = pygame.image.load("knight.png").convert_alpha()
+    explorer_img = pygame.transform.scale(explorer_img, (CELL_SIZE, CELL_SIZE))
 
     grid = generate_static_map()
     explorer = Explorer((26,0), grid)
@@ -172,7 +174,8 @@ def main():
         ey, ex = explorer.pos
         ex_px = offset_x + ex * CELL_SIZE
         ey_px = offset_y + ey * CELL_SIZE
-        pygame.draw.circle(screen, (255, 0, 0), (ex_px + CELL_SIZE//2, ey_px + CELL_SIZE//2), CELL_SIZE//3)
+        screen.blit(explorer_img, (ex_px, ey_px))
+
 
 
     running = True
