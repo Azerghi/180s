@@ -50,7 +50,7 @@ class Explorer:
         for _ in range(n):
             if x == x1 and y == y1:
                 return True
-            if self.map[y][x] == 1:
+            if self.map[y][x] >= 1:
                 return False  # Wall is visible, but blocks further sight
             if error > 0:
                 x += x_inc
@@ -140,7 +140,7 @@ class Explorer:
                 ny, nx = current[0] + dy, current[1] + dx
                 neighbor = (ny, nx)
                 if 0 <= ny < len(self.known_map) and 0 <= nx < len(self.known_map[0]):
-                    if self.known_map[ny][nx] != 1:  # Peut marcher ici
+                    if self.known_map[ny][nx] < 1:  # Peut marcher ici
                         tentative_g = g_score[current] + 1
                         if neighbor not in g_score or tentative_g < g_score[neighbor]:
                             came_from[neighbor] = current
@@ -182,46 +182,13 @@ def main():
     explorer_img = pygame.image.load("knight.png").convert_alpha()
     explorer_img = pygame.transform.scale(explorer_img, (CELL_SIZE, CELL_SIZE))
 
+    door_img = pygame.image.load("Door.png").convert_alpha()
+    door_img = pygame.transform.scale(door_img, (CELL_SIZE, CELL_SIZE))
+
     grid = generate_static_map()
     explorer = Explorer((26,0), grid)
     explorer.update_visibility()
 
-
-    def a_star(start, goal, grid):
-        heap = []
-        heapq.heappush(heap, (0, start))
-        came_from = {start: None}
-        cost_so_far = {start: 0}
-
-        while heap:
-            _, current = heapq.heappop(heap)
-
-            if current == goal:
-                break
-
-            for dy, dx in [(-1,0),(1,0),(0,-1),(0,1)]:
-                ny, nx = current[0] + dy, current[1] + dx
-                if 0 <= ny < len(grid) and 0 <= nx < len(grid[0]):
-                    if grid[ny][nx] != 1:  # mur bloquant
-                        new_cost = cost_so_far[current] + 1
-                        next_node = (ny, nx)
-                        if next_node not in cost_so_far or new_cost < cost_so_far[next_node]:
-                            cost_so_far[next_node] = new_cost
-                            priority = new_cost + heuristic(goal, next_node)
-                            heapq.heappush(heap, (priority, next_node))
-                            came_from[next_node] = current
-
-        # Reconstruire le chemin
-        path = []
-        node = goal
-        while node and node in came_from:
-            path.append(node)
-            node = came_from[node]
-        path.reverse()
-        return path[1:]  # on ignore la case actuelle
-
-    def heuristic(a, b):
-        return abs(a[0] - b[0]) + abs(a[1] - b[1])  # distance de Manhattan
 
     def draw_grid(screen, known_map, wall_img, floor_img):
         for row in range(ROWS):
@@ -237,6 +204,8 @@ def main():
                     screen.blit(wall_img, rect)
                 else:
                     screen.blit(floor_img, rect)
+                if val == 2:
+                    screen.blit(door_img, rect)
 
         ey, ex = explorer.pos
         ex_px = offset_x + ex * CELL_SIZE
@@ -249,7 +218,7 @@ def main():
     end_time = None
     running = True
     while running:
-        clock.tick(50)
+        clock.tick(30)
         for event in pygame.event.get():
             if event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE):
                 running = False
