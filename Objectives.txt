@@ -1,8 +1,8 @@
 
 Mettre a la place du point
 finir l'algo des frontieres, avec un calcul des centroids
-finir la maps pour remplir completement l'espace
-mettre une porte de boss devant la salle de fin pour l'exploration pas explorer la salle de boss mais montrer que c'est la
+✔️ finir la maps pour remplir completement l'espace 
+✔️ mettre une porte de boss devant la salle de fin pour l'exploration pas explorer la salle de boss mais montrer que c'est la
 
 2eme partie : 
 Faire des algo de pathfindings 
