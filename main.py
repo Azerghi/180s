@@ -249,17 +249,14 @@ def main():
     end_time = None
     running = True
     while running:
-        clock.tick(30)
+        clock.tick(50)
         for event in pygame.event.get():
             if event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE):
                 running = False
 
         screen.fill((0, 0, 0))
 
-        # Step 1: Save the known map before update
         old_known_map = [row.copy() for row in explorer.known_map]
-
-        # Step 2: Decide what to do
         if not explorer.path:
             # Pick the closest frontier centroid as target
             target = explorer.choose_target()
@@ -276,7 +273,8 @@ def main():
         else:
             # Step forward on the path
             explorer.pos = explorer.path.pop(0)
-            explorer.update_visibility()
+        
+        explorer.update_visibility()
 
         # Step 3: Check if anything new is discovered
         map_changed = any(
@@ -285,15 +283,14 @@ def main():
             for x in range(len(explorer.known_map[0]))
         )
 
-            # If changed, reset path to recalculate it
+         # If changed, reset path to recalculate it
 
         frontiers = explorer.get_frontiers()
 
-        if map_changed or not explorer.path:
-            
+        """if map_changed or not explorer.path:
             if frontiers:
                 target = frontiers[0]
-                explorer.path = a_star(explorer.pos, target, explorer.known_map)
+                explorer.path = a_star(explorer.pos, target, explorer.known_map)"""
         
         if not frontiers and not explorer.path:
             if end_time is None:
@@ -304,6 +301,8 @@ def main():
             target = explorer.choose_target()
             if target:
                 explorer.path = explorer.a_star(explorer.pos, target)
+
+
 
 
         draw_grid(screen, explorer.known_map, wall_img, floor_img)
