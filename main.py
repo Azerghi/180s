@@ -213,17 +213,34 @@ def main():
                 running = False
 
         screen.fill((0, 0, 0))
-        if not explorer.path:
-            frontiers = explorer.get_frontiers()
-            if frontiers:
-                target = frontiers[0]  # on pourrait choisir plus intelligent plus tard
-                explorer.path = a_star(explorer.pos, target, explorer.known_map)
+
+        old_known_map = [row.copy() for row in explorer.known_map]
+
+        # if not explorer.path:
+        #     frontiers = explorer.get_frontiers()
+        #     if frontiers:
+        #         target = frontiers[0]  # on pourrait choisir plus intelligent plus tard
+        #         explorer.path = a_star(explorer.pos, target, explorer.known_map)
 
         if explorer.path:
             next_pos = explorer.path.pop(0)
             explorer.pos = next_pos
-            explorer.update_visibility()
+        
+        explorer.update_visibility()
 
+        #check map change
+        map_changed = any(old_known_map[y][x] != explorer.known_map[y][x] 
+                        for y in range(len(explorer.known_map))
+                        for x in range(len(explorer.known_map[0]))
+                        )
+
+            # If changed, reset path to recalculate it
+            
+        if map_changed or not explorer.path:
+            frontiers = explorer.get_frontiers()
+            if frontiers:
+                target = frontiers[0]
+                explorer.path = a_star(explorer.pos, target, explorer.known_map)
 
         draw_grid(screen, explorer.known_map, wall_img, floor_img)
         frontiers = explorer.get_frontiers()
