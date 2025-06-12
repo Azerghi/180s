@@ -15,3 +15,7 @@ Essayer d'avoir un visuel.
 Temps additionel ::
 Effet torche sur le champs de vision ? 
 Regler les TP a travers le mur??
+
+
+parse a travers la liste d'etapes a chaque deplacement 
+recalcul si l'un d'entre eux est un mur

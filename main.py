@@ -105,7 +105,49 @@ class Explorer:
                         frontiers.append((cy, cx))
 
         return frontiers
+    
+    def choose_target(self):
+        frontiers = self.get_frontiers()
+        if not frontiers:
+            return None
 
+        def manhattan(pos1, pos2):
+            return abs(pos1[0] - pos2[0]) + abs(pos1[1] - pos2[1])
+
+        # On choisit la frontière la plus proche
+        closest = min(frontiers, key=lambda f: manhattan(self.pos, f))
+        return closest
+    
+    def a_star(self, start, goal):
+        open_set = []
+        heapq.heappush(open_set, (0, start))
+        came_from = {}
+        g_score = {start: 0}
+
+        while open_set:
+            _, current = heapq.heappop(open_set)
+
+            if current == goal:
+                # On reconstruit le chemin
+                path = []
+                while current != start:
+                    path.append(current)
+                    current = came_from[current]
+                path.reverse()
+                return path
+
+            for dy, dx in [(-1,0),(1,0),(0,-1),(0,1)]:
+                ny, nx = current[0] + dy, current[1] + dx
+                neighbor = (ny, nx)
+                if 0 <= ny < len(self.known_map) and 0 <= nx < len(self.known_map[0]):
+                    if self.known_map[ny][nx] != 1:  # Peut marcher ici
+                        tentative_g = g_score[current] + 1
+                        if neighbor not in g_score or tentative_g < g_score[neighbor]:
+                            came_from[neighbor] = current
+                            g_score[neighbor] = tentative_g
+                            f = tentative_g + abs(goal[0]-ny) + abs(goal[1]-nx)
+                            heapq.heappush(open_set, (f, neighbor))
+        return []
 
 def main():
 
@@ -139,9 +181,6 @@ def main():
 
     explorer_img = pygame.image.load("knight.png").convert_alpha()
     explorer_img = pygame.transform.scale(explorer_img, (CELL_SIZE, CELL_SIZE))
-
-    door_img = pygame.image.load("Door.png").convert_alpha()
-    door_img = pygame.transform.scale(door_img, (CELL_SIZE, CELL_SIZE))
 
     grid = generate_static_map()
     explorer = Explorer((26,0), grid)
@@ -198,8 +237,7 @@ def main():
                     screen.blit(wall_img, rect)
                 else:
                     screen.blit(floor_img, rect)
-                if val == 2 :
-                    screen.blit(door_img, rect)
+
         ey, ex = explorer.pos
         ex_px = offset_x + ex * CELL_SIZE
         ey_px = offset_y + ey * CELL_SIZE
@@ -218,25 +256,34 @@ def main():
 
         screen.fill((0, 0, 0))
 
+        # Step 1: Save the known map before update
         old_known_map = [row.copy() for row in explorer.known_map]
 
-        # if not explorer.path:
-        #     frontiers = explorer.get_frontiers()
-        #     if frontiers:
-        #         target = frontiers[0]  # on pourrait choisir plus intelligent plus tard
-        #         explorer.path = a_star(explorer.pos, target, explorer.known_map)
+        # Step 2: Decide what to do
+        if not explorer.path:
+            # Pick the closest frontier centroid as target
+            target = explorer.choose_target()
 
-        if explorer.path:
-            next_pos = explorer.path.pop(0)
-            explorer.pos = next_pos
-        
-        explorer.update_visibility()
+            if target:
+                # Plan a path
+                explorer.path = explorer.a_star(explorer.pos, target)
 
-        #check map change
-        map_changed = any(old_known_map[y][x] != explorer.known_map[y][x] 
-                        for y in range(len(explorer.known_map))
-                        for x in range(len(explorer.known_map[0]))
-                        )
+                # Optional: draw the target (e.g. yellow circle)
+                tx, ty = target[1], target[0]
+                tx_px = offset_x + tx * CELL_SIZE
+                ty_px = offset_y + ty * CELL_SIZE
+                pygame.draw.circle(screen, (255, 255, 0), (tx_px + CELL_SIZE // 2, ty_px + CELL_SIZE // 2), CELL_SIZE // 4)
+        else:
+            # Step forward on the path
+            explorer.pos = explorer.path.pop(0)
+            explorer.update_visibility()
+
+        # Step 3: Check if anything new is discovered
+        map_changed = any(
+            old_known_map[y][x] != explorer.known_map[y][x]
+            for y in range(len(explorer.known_map))
+            for x in range(len(explorer.known_map[0]))
+        )
 
             # If changed, reset path to recalculate it
 
@@ -252,10 +299,15 @@ def main():
             if end_time is None:
                 end_time = time.time()
                 print(f"Exploration complete in {end_time - start_time:.2f} seconds")
+        # Optional re-evaluation after new area is discovered
+        if map_changed and not explorer.path:
+            target = explorer.choose_target()
+            if target:
+                explorer.path = explorer.a_star(explorer.pos, target)
+
 
         draw_grid(screen, explorer.known_map, wall_img, floor_img)
         frontiers = explorer.get_frontiers()
-        # print(frontiers)
         for fy, fx in frontiers:
             fx_px = offset_x + fx * CELL_SIZE
             fy_px = offset_y + fy * CELL_SIZE
