@@ -252,31 +252,41 @@ def main():
 
         screen.fill((0, 0, 0))
 
+        # Step 1: Save the known map before update
         old_known_map = [row.copy() for row in explorer.known_map]
+
+        # Step 2: Decide what to do
         if not explorer.path:
+            # Pick the closest frontier centroid as target
             target = explorer.choose_target()
+
             if target:
-                fy = target[1]
-                fx = target[0]
-                fx_px = offset_x + fx * CELL_SIZE
-                fy_px = offset_y + fy * CELL_SIZE
-                pygame.draw.circle(screen, (255, 255, 0), (target[0] + CELL_SIZE // 2, target[1] + CELL_SIZE // 2), CELL_SIZE // 4)
+                # Plan a path
                 explorer.path = explorer.a_star(explorer.pos, target)
+
+                # Optional: draw the target (e.g. yellow circle)
+                tx, ty = target[1], target[0]
+                tx_px = offset_x + tx * CELL_SIZE
+                ty_px = offset_y + ty * CELL_SIZE
+                pygame.draw.circle(screen, (255, 255, 0), (tx_px + CELL_SIZE // 2, ty_px + CELL_SIZE // 2), CELL_SIZE // 4)
         else:
-            # Avancer d’une case
+            # Step forward on the path
             explorer.pos = explorer.path.pop(0)
             explorer.update_visibility()
 
-        map_changed = any(old_known_map[y][x] != explorer.known_map[y][x] 
-                        for y in range(len(explorer.known_map))
-                        for x in range(len(explorer.known_map[0]))
-                        )
+        # Step 3: Check if anything new is discovered
+        map_changed = any(
+            old_known_map[y][x] != explorer.known_map[y][x]
+            for y in range(len(explorer.known_map))
+            for x in range(len(explorer.known_map[0]))
+        )
 
-        if map_changed:
-            frontiers = explorer.get_frontiers()
-            if frontiers:
-                target = frontiers[0]
-                explorer.path = a_star(explorer.pos, target, explorer.known_map)
+        # Optional re-evaluation after new area is discovered
+        if map_changed and not explorer.path:
+            target = explorer.choose_target()
+            if target:
+                explorer.path = explorer.a_star(explorer.pos, target)
+
 
         draw_grid(screen, explorer.known_map, wall_img, floor_img)
         frontiers = explorer.get_frontiers()
